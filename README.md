@@ -66,7 +66,10 @@ Type `help` in the simulator:
 - `load fname[.arm]`
 - `title your title here`
 - `clear registers` / `clear memory` / `clear`
-- `run [fast|slow] [nsteps]` (defaults: 20 steps, or 50 steps for fast)
+- `break [#addr]` / `break list` / `break del #addr` / `break toggle #addr` / `break clear`
+- `step [n]` (executes n instructions; stops before the next breakpoint)
+- `continue` / `cont` / `c` (continue execution; steps once if currently on a breakpoint)
+- `run [fast|slow] [nsteps]` (default: `slow` runs 20 steps; `fast` runs until HALT)
 
 ---
 
