@@ -32,6 +32,98 @@ Simulator::Simulator(): cpu(), mem(256/4), ui() {
   ui.setMemMode(MemMode::CODE);
 }
 
+void Simulator::cmdBreak(const std::string& restIn) {
+  auto rest = trim(restIn);
+  if (rest.empty() || rest == "list") {
+    if (breakpoints.empty()) {
+      std::cout << "No breakpoints set.\n";
+      return;
+    }
+    std::cout << "Breakpoints (PC byte addresses):\n";
+    // Print in sorted order for readability.
+    std::vector<u64> bps(breakpoints.begin(), breakpoints.end());
+    std::sort(bps.begin(), bps.end());
+    for (auto a : bps) std::cout << "  * " << a << "\n";
+    return;
+  }
+
+  if (rest == "clear") {
+    breakpoints.clear();
+    std::cout << "Cleared all breakpoints.\n";
+    return;
+  }
+
+  // del/rm/delete
+  if (startsWith(rest, "del ") || startsWith(rest, "rm ") || startsWith(rest, "delete ")) {
+    std::istringstream iss(rest);
+    std::string cmd, addrTok;
+    iss >> cmd >> addrTok;
+    if (addrTok.empty()) throw std::runtime_error("Usage: break del #addr");
+    u64 a = parseAddrToken(addrTok);
+    auto n = breakpoints.erase(a);
+    std::cout << (n ? "Removed" : "No") << " breakpoint at PC=" << a << "\n";
+    return;
+  }
+
+  // toggle
+  if (startsWith(rest, "toggle ")) {
+    auto addrTok = trim(rest.substr(7));
+    if (addrTok.empty()) throw std::runtime_error("Usage: break toggle #addr");
+    u64 a = parseAddrToken(addrTok);
+    if (breakpoints.count(a)) {
+      breakpoints.erase(a);
+      std::cout << "Removed breakpoint at PC=" << a << "\n";
+    } else {
+      breakpoints.insert(a);
+      std::cout << "Set breakpoint at PC=" << a << "\n";
+    }
+    return;
+  }
+
+  // otherwise treat as address to add
+  u64 a = parseAddrToken(rest);
+  breakpoints.insert(a);
+  std::cout << "Set breakpoint at PC=" << a << "\n";
+}
+
+void Simulator::cmdStep(const std::string& restIn) {
+  auto rest = trim(restIn);
+  int n = 1;
+  if (!rest.empty()) n = std::stoi(rest);
+  if (n <= 0) return;
+
+  for (int i = 0; i < n; i++) {
+    ui.printState(cpu, mem);
+    bool cont = cpu.step(mem);
+    if (!cont) {
+      std::cout << "\nHALT\n";
+      running = false;
+      return;
+    }
+    // After executing one instruction, if the NEXT instruction is at a breakpoint,
+    // stop before executing it (typical debugger behavior).
+    if (breakpoints.count(cpu.getPC())) {
+      ui.printState(cpu, mem);
+      std::cout << "\nBreakpoint hit at PC=" << cpu.getPC() << "\n";
+      return;
+    }
+  }
+}
+
+void Simulator::cmdContinue(const std::string& /*rest*/) {
+  // If we're currently *on* a breakpoint, step once to get off it, then run.
+  if (breakpoints.count(cpu.getPC())) {
+    bool cont = cpu.step(mem);
+    if (!cont) {
+      ui.printState(cpu, mem);
+      std::cout << "\nHALT\n";
+      running = false;
+      return;
+    }
+  }
+  cmdRun("fast");
+}
+
 void Simulator::cmdMemory(const std::string& arg) {
   auto a = trim(arg);
   if (a == "hex") ui.setMemMode(MemMode::HEX);
