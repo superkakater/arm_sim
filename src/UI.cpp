@@ -71,10 +71,13 @@ void UI::printHelp() const {
   cout << "PC=#00\n";
   cout << "M[#00]=#\n";
   cout << "R[#]=#, X#=#\n";
+  cout << "break [#addr] | break list | break del #addr | break toggle #addr | break clear\n";
+  cout << "step [n] (execute n instructions, stops before next breakpoint)\n";
+  cout << "continue | cont | c (continue execution; steps once if currently on a breakpoint)\n";
   cout << "save fname[.arm]\n";
   cout << "load fname[.arm]\n";
   cout << "title title\n";
   cout << "clear registers, clear memory, clear\n";
   cout << "ARM instruction (LDUR,STUR,B,CBZ,CBNZ,ADD,SUB,AND,ORR,ADDI,SUBI + extras)\n";
-  cout << "run [fast|slow] [nsteps] (default: 20 steps, 50 for fast)\n";
+  cout << "run [fast|slow] [nsteps] (default: 20 steps for slow; fast runs until HALT)\n";
 }
