@@ -1,5 +1,6 @@
 #include "Simulator.h"
 #include "Assembler.h"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -24,6 +25,10 @@ static u64 parseHashNum(const std::string& tok) {
   int base = 10;
   if (t.rfind("0x", 0) == 0 || t.rfind("0X", 0) == 0) base = 16;
   return (u64)std::stoull(t, nullptr, base);
+}
+
+static u64 parseAddrToken(const std::string& tok) {
+  return parseHashNum(trim(tok));
 }
 
 Simulator::Simulator(): cpu(), mem(256/4), ui() {
